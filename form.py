@@ -7,7 +7,7 @@ root.geometry("500x300")
 def getvals():
     print("Accepted")
 
-Label(root, text="Registration Form", font="ar 15 bold").grid(row+0, column=3)
+Label(root, text="Registration Form", font="ar 15 bold").grid(row=0, column=3)
 
 name = Label(root, text="Name")
 phone = Label(root, text="Phone")
@@ -39,7 +39,6 @@ phoneentry.grid(row=2, column=3)
 genderentry.grid(row=3, column=3)
 emergencyentry.grid(row=4, column=3)
 paymentmodeentry.grid(row=5, column=3)
-
 
 checkbtn = Checkbutton(text="remember me?", variable = checkvalue)
 checkbtn.grid(row=6, column=3)
