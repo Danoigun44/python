@@ -1,0 +1,112 @@
+# cloud run function to submit registration form and integrate with database
+import functions_framework
+from flask import request, make_response
+from google.cloud import firestore
+
+# Initialize Firestore client
+db = firestore.Client()  # This connects to the default Firestore database for your GCP project.
+
+@functions_framework.http
+def register_form(request):
+    # Serve the form (GET request)
+    if request.method == 'GET':
+        html_form = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Registration Form</title>
+            <style>
+                body { font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px; }
+                form { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); max-width: 400px; margin: auto; }
+                label { display: block; margin-bottom: 8px; font-weight: bold; }
+                input, select, button { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; }
+                button { background-color: #28a745; color: white; border: none; }
+            </style>
+        </head>
+        <body>
+            <h1 style="text-align: center;">Registration Form</h1>
+            <form method="POST" action="">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" required>
+
+                <label for="phone">Phone</label>
+                <input type="text" id="phone" name="phone" required>
+
+                <label for="gender">Gender</label>
+                <select id="gender" name="gender" required>
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+
+                <label for="emergency">Emergency Contact</label>
+                <input type="text" id="emergency" name="emergency" required>
+
+                <label for="paymentmode">Payment Mode</label>
+                <input type="text" id="paymentmode" name="paymentmode" required>
+
+                <button type="submit">Submit</button>
+            </form>
+        </body>
+        </html>
+        """
+        return make_response(html_form, 200, {'Content-Type': 'text/html'})
+
+    # Handle form submission (POST request)
+    elif request.method == 'POST':
+        try:
+            # Collect form data
+            name = request.form.get('name')
+            phone = request.form.get('phone')
+            gender = request.form.get('gender')
+            emergency = request.form.get('emergency')
+            paymentmode = request.form.get('paymentmode')
+
+            # Save data to the 'registrations' collection
+            doc_ref = db.collection('registrations').add({
+                'name': name,
+                'phone': phone,
+                'gender': gender,
+                'emergency': emergency,
+                'paymentmode': paymentmode
+            })
+
+            # Display success message
+            success_message = f"""
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Success</title>
+            </head>
+            <body>
+                <h1>Registration Successful!</h1>
+                <p>Thank you, {name}. Your registration has been recorded.</p>
+            </body>
+            </html>
+            """
+            return make_response(success_message, 200, {'Content-Type': 'text/html'})
+        except Exception as e:
+            error_message = f"""
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Error</title>
+            </head>
+            <body>
+                <h1>Error</h1>
+                <p>There was an error processing your registration. Please try again later.</p>
+                <p>Error details: {e}</p>
+            </body>
+            </html>
+            """
+            return make_response(error_message, 500, {'Content-Type': 'text/html'})
+
+    # Return 405 for unsupported methods
+    return "Method not allowed", 405
